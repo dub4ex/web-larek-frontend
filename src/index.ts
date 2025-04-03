@@ -40,7 +40,6 @@ const contacts = new Contacts(cloneTemplate(contactsTemplate), events);
 // Чтобы мониторить все события, для отладки
 events.onAll(({ eventName, data }) => {
   console.log(eventName, data);
-  console.log(appData.order);
 })
 
 // Получаем товары с сервера
@@ -109,13 +108,11 @@ events.on('item:addOrDelete', (item: IProduct) => {
 //открытие корзины
 events.on('basket:open', () => {
   basket.setTotalPrice(appData.getTotalPrice());
-  //создание счётчика
-  let i = 0;
-  basket.items = appData.basket.map((item) => {
+  basket.items = appData.basket.map((item, i) => {
     const card = new BasketCard(cloneTemplate(cardBasketTemplate), {
       onClick: () => events.emit('item:remove', item)
     });
-    i = i + 1;
+    i++ ;
     return card.render({
       title: item.title,
       price: item.price,
@@ -130,44 +127,47 @@ events.on('basket:open', () => {
 //удаление товара из корзины
 events.on('item:remove', (item: IProduct) => {
   appData.deleteProduct(item);
-  //console.log(appData.basket);
   page.counter = appData.basket.length;
 })
 
 //открытие заказа с оплатой и адресом
 events.on('order:open', () => {
-  appData.order.items = appData.basket.map(item => item.id);
+  const { payment, address } = appData.order;
   appData.order.total = appData.getTotalPrice();
   modal.render({
     content: order.render({
-      payment: '',
-      address: '',
-      valid: false,
-      errors: []
+      valid: order.valid || false,
+      errors: order.errors || [],
+      payment: payment || '',
+      address: address || ''
     })
-  });
+  })
 })
 
 // Изменилось состояние валидации формы
 events.on('formOrderErrors:change', (errors: Partial<IOrderForm>) => {
-  const { address } = errors;
-  order.valid = !address;
-  order.errors = Object.values({ address }).filter(i => !!i).join('; ');
+  const { address, payment } = errors;
+  order.valid = !address && !payment;
+  order.errors = Object.values({ address, payment }).filter(i => !!i).join('; ');
 })
 
 // Изменилось одно из полей
 events.on(/^order\..*:change/, (data: { field: keyof IOrderForm, value: string | TPayment}) => {
   appData.setOrderField(data.field, data.value);
+  if (data.field === 'payment') {
+    order.updateButtons(data.value)
+  }
 })
 
 //открытие модалки с личными данными
 events.on('order:submit', () => {
+  const { email, phone } = appData.order;
   modal.render({
     content: contacts.render({
-      email: '',
-      phone: '',
-      valid: false,
-      errors: []
+      email:  email || '',
+      phone: phone || '',
+      valid: order.valid || false,
+      errors: order.errors || []
     })
   })
 })
@@ -186,7 +186,7 @@ events.on(/^contacts\..*:change/, (data: { field: keyof IContactsForm, value: st
 
 //отправка данных на сервер и очистка корзины
 events.on('contacts:submit', () => {
-  api.postFinalOrder(appData.order)
+  api.postFinalOrder(appData.getOrderToPost())
     .then(data => {
       const success = new Success(cloneTemplate(successTemplate), {
         onClick: () => modal.close()
@@ -207,52 +207,3 @@ events.on('contacts:submit', () => {
       console.error(err);
     });
 })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

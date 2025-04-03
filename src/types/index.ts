@@ -52,6 +52,9 @@ export interface IOrderResponse {
   total: number
 }
 
+//тип заказа в модели данных
+export type IDataOrder = Omit<IOrder, 'items'>
+
 //интерфейс заказа что я должен буду отправить на сервер
 export interface IOrder {
   payment: string;
@@ -61,9 +64,3 @@ export interface IOrder {
   total: number;
   items: string[]
 }
-
-
-
-
-
-

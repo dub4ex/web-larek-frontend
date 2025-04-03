@@ -14,23 +14,29 @@ export class Order extends Form<IOrderForm> {
     this._cash = ensureElement<HTMLButtonElement>('[name=cash]', this.container);
 
     this._card.addEventListener('click', () => {
-      this._card.classList.add('button_alt_active');
-      this._cash.classList.add('button_alt');
-      this._card.classList.remove('button_alt');
-      this._cash.classList.remove('button_alt_active');
       this.events.emit('order.button:change', { field: 'payment', value: 'card'});
     });
 
     this._cash.addEventListener('click', () => {
-      this._card.classList.add('button_alt');
-      this._cash.classList.add('button_alt_active');
-      this._card.classList.remove('button_alt_active');
-      this._cash.classList.remove('button_alt');
       this.events.emit('order.button:change', { field: 'payment', value: 'cash'});
     });
   }
 
   set address(value: string) {
     (this.container.elements.namedItem('address') as HTMLInputElement).value = value;
+  }
+
+  updateButtons(payment: string) {
+    if(payment === 'card') {
+      this._card.classList.add('button_alt_active');
+      this._cash.classList.add('button_alt');
+      this._card.classList.remove('button_alt');
+      this._cash.classList.remove('button_alt_active');
+    } else if(payment === 'cash') {
+      this._card.classList.add('button_alt');
+      this._cash.classList.add('button_alt_active');
+      this._card.classList.remove('button_alt_active');
+      this._cash.classList.remove('button_alt');
+    }
   }
 }

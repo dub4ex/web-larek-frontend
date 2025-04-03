@@ -4,7 +4,7 @@ import { IEvents } from "../base/events";
 
 interface IFormState {
   valid: boolean;
-  errors: string[];
+  errors: string[] | string;
 }
 
 export class Form<T> extends Component<IFormState> {
